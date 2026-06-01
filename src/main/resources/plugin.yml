@@ -1,0 +1,23 @@
+name: InstantNetherPortals
+version: '${project.version}'
+main: de.emilo.instantnetherportals.InstantNetherPortals
+api-version: '1.21'
+authors:
+  - emilo
+description: Makes Nether portals teleport players instantly with configurable delay.
+
+commands:
+  instantportal:
+    description: Toggle or configure InstantNetherPortals
+    usage: /instantportal [on|off|reload|status]
+    permission: instantnetherportals.admin
+    aliases:
+      - inp
+
+permissions:
+  instantnetherportals.use:
+    description: Allows instant nether portal teleportation (give via LuckPerms)
+    default: op
+  instantnetherportals.admin:
+    description: Allows toggling and reloading the plugin
+    default: op

@@ -1,0 +1,12 @@
+# InstantNetherPortals Configuration
+
+# Whether the plugin is currently active
+enabled: true
+
+# How long a player must stand in the portal before teleporting (in ticks)
+#   0  = instant (no wait)
+#  20  = 1 second
+#  40  = 2 seconds
+#  80  = vanilla default (4 seconds in survival)
+# Only values from 0 to 80 are meaningful; higher values fall back to vanilla.
+teleport-delay: 0
