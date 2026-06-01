@@ -1,7 +1,10 @@
 # InstantNetherPortals - Build Script
-# Compiles the plugin, copies it to versions/ with the naming convention
-#   [name]_[v#.#]_[mc-version].jar
-# and auto-increments the minor version in pom.xml after a successful build.
+# 1. Reads the current version from pom.xml
+# 2. Runs mvn clean package
+# 3. Copies the JAR to versions/ as  [name]_[v#.#]_[mc-version].jar
+# 4. Commits the new JAR + pom.xml bump, tags the commit, pushes to GitHub
+# 5. Creates a GitHub release and attaches the JAR as an asset
+# 6. Bumps the minor version in pom.xml for the next build
 
 $PomPath    = Join-Path $PSScriptRoot "pom.xml"
 $TargetDir  = Join-Path $PSScriptRoot "target"
@@ -40,7 +43,7 @@ Pop-Location
 
 if ($buildResult -ne 0) {
     Write-Host ""
-    Write-Host "  BUILD FAILED - version NOT incremented." -ForegroundColor Red
+    Write-Host "  BUILD FAILED - version NOT incremented, no release created." -ForegroundColor Red
     exit 1
 }
 
@@ -68,12 +71,26 @@ $major = [int]$parts[0]
 $minor = [int]$parts[1]
 $newVersion = "$major.$($minor + 1)"
 
-# Use ${1} and ${2} notation to avoid $1 + "1.1" being parsed as $11 by .NET regex
 $pattern     = '(?s)(<artifactId>InstantNetherPortals</artifactId>\s*<version>)[^<]+(</version>)'
 $replacement = '${1}' + $newVersion + '${2}'
 $updatedContent = $pomContent -replace $pattern, $replacement
-
 Set-Content -Path $PomPath -Value $updatedContent -Encoding UTF8 -NoNewline
 
 Write-Host "  pom.xml version bumped:  $currentVersion  ->  $newVersion" -ForegroundColor Yellow
+
+# Git commit + tag
+$tag = "v$currentVersion"
+git add versions/$outputName pom.xml
+git commit -m "Release $tag for MC $mcVersion"
+git tag $tag
+git push
+git push --tags
+
+# GitHub release
+$releaseTitle = "v$currentVersion for MC $mcVersion"
+$releaseNotes = "InstantNetherPortals $tag - Paper $mcVersion"
+gh release create $tag $outputJar --title $releaseTitle --notes $releaseNotes
+
+Write-Host ""
+Write-Host "  GitHub release created: $tag" -ForegroundColor Green
 Write-Host ""
