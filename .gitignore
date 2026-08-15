@@ -1,6 +1,0 @@
-target/
-*.class
-*.iml
-.idea/
-.vscode/
-*.DS_Store
