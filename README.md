@@ -1,37 +1,37 @@
 # InstantNetherPortals
 
-A lightweight plugin for Minecraft **1.21.8** that makes Nether portal teleportation instant (or configurable) in both directions — Overworld → Nether and Nether → Overworld.
+A lightweight Paper plugin for Minecraft 1.21.8 that removes the 4 second wait in Nether portals. Teleportation works in both directions (Overworld to Nether and back), and the delay is configurable if you want something between instant and vanilla.
 
 ## Features
 
-- **Instant teleportation** through Nether portals (both directions)
-- **Configurable delay** — set any value from 0 ticks (instant) up to vanilla (80 ticks / 4 seconds)
-- **Chunk pre-loading** — destination chunks are loaded before the player arrives, preventing freeze on arrival
-- **LuckPerms-compatible permissions** — grant per-player or per-group
-- **Toggle command** with tab-completion
-- Live reload config without server restart
+- Instant teleportation through Nether portals in both directions
+- Configurable delay from 0 ticks (instant) up to 80 ticks (vanilla)
+- Destination chunks are pre-loaded before the player arrives, so there is no freeze on arrival
+- Per-player and per-group permissions, compatible with LuckPerms
+- Toggle command with tab completion
+- Config reload without a server restart
 
 ## Requirements
 
 | Server | Support |
 |--------|---------|
-| Paper 1.21.8 | Full (instant portals + chunk pre-loading) |
+| Paper 1.21.8 | Full (instant portals and chunk pre-loading) |
 | Purpur / Pufferfish | Full |
-| Spigot / Bukkit 1.21.8 | Loads — chunk pre-loading (basic mode), no instant portals |
+| Spigot / Bukkit 1.21.8 | Loads, chunk pre-loading in basic mode, no instant portals |
 
 | Other requirement | Version |
 |-------------------|---------|
 | Java | 21+ |
 | Maven | 3.9+ (build only) |
 
-> **Instant portal teleportation requires Paper.** On Spigot/Bukkit the plugin loads safely but NMS features are disabled — portals use the vanilla 4-second delay.
+Instant portal teleportation requires Paper. On Spigot and Bukkit the plugin still loads, but the NMS features are disabled and portals use the vanilla 4 second delay.
 
 ## Installation
 
 1. Download the latest JAR from [Releases](../../releases)
 2. Drop it into your server's `plugins/` folder
 3. Restart the server
-4. Assign the `instantnetherportals.use` permission to players (see below)
+4. Grant the `instantnetherportals.use` permission to your players
 
 ## Configuration
 
@@ -62,7 +62,8 @@ chunk-preload:
 | `instantnetherportals.use` | Instant portal teleportation | `op` |
 | `instantnetherportals.admin` | Use the `/instantportal` command | `op` |
 
-**LuckPerms examples:**
+LuckPerms examples:
+
 ```
 /lp group default permission set instantnetherportals.use true
 /lp user Steve permission set instantnetherportals.admin true
@@ -86,18 +87,20 @@ Alias: `/inp`
 .\build.ps1
 ```
 
-The script compiles the plugin, copies the JAR to `versions/` using the naming convention  
-`InstantNetherPortals_v{major}.{minor}_{mc-version}.jar`, and auto-increments the minor version in `pom.xml`.
-
-See [CLAUDE.md](.claude/CLAUDE.md) for full build documentation.
+The script compiles the plugin, copies the JAR to `versions/` using the naming convention
+`InstantNetherPortals_v{major}.{minor}_{mc-version}.jar`, and bumps the minor version in `pom.xml`.
 
 ## How it works
 
-Paper 1.21.8 tracks portal wait time inside a `PortalProcessor` object (`Entity.portalProcess`). Each tick the plugin sets `PortalProcessor.portalTime` to `maxTime - delay` via reflection, so the game fires the portal after exactly `delay` more ticks. With `delay = 0` this happens within 1–2 game ticks (~50–100 ms), which is imperceptible.
+Paper 1.21.8 tracks the portal wait time in a `PortalProcessor` object (`Entity.portalProcess`). Every tick the plugin sets `PortalProcessor.portalTime` to `maxTime - delay` via reflection, so the game fires the portal after exactly `delay` more ticks. At `delay = 0` that happens within 1 to 2 game ticks (roughly 50 to 100 ms), which nobody notices.
 
-While a player is near a portal, the plugin pre-loads a 17×17 chunk area at the translated destination coordinates (`×8` OW→Nether, `÷8` Nether→OW) before they step in, preventing the freeze that occurs when destination chunks are generated on arrival.
+While a player is near a portal, the plugin pre-loads a 17x17 chunk area at the translated destination coordinates (x8 for Overworld to Nether, /8 for Nether to Overworld). Without this, the server generates those chunks the moment the player arrives, which is what causes the usual freeze.
 
-On Spigot/Bukkit, the NMS field names are obfuscated and differ per version — the plugin detects this at startup, disables NMS-dependent features, and logs a warning.
+On Spigot and Bukkit the NMS field names are obfuscated and differ per version. The plugin detects this at startup, disables the NMS-dependent features and logs a warning instead of failing.
+
+## Source
+
+[github.com/EmilDeuOfficial/InstantNetherPortals](https://github.com/EmilDeuOfficial/InstantNetherPortals)
 
 ## License
 
