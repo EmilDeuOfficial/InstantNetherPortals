@@ -2,10 +2,7 @@ package de.emilo.instantnetherportals;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.Field;
@@ -24,7 +21,6 @@ public class PortalListener implements Listener {
     private boolean reflectionReady     = false;
     private Field   portalProcessField;  // Entity        -> PortalProcessor
     private Field   processorTimeField;  // PortalProcessor -> int portalTime
-    private Field   portalCooldownField; // Entity        -> int portalCooldown
     private Method  getPortalWaitTimeMethod;
     private Method  getHandleMethod;
 
@@ -46,8 +42,8 @@ public class PortalListener implements Listener {
                 if (!config.isEnabled()) return;
                 for (Player player : plugin.getServer().getOnlinePlayers()) {
                     if (!player.hasPermission("instantnetherportals.use")) continue;
+                    if (player.getPortalCooldown() > 0) continue;
                     if (!isInNetherPortal(player)) continue;
-                    if (hasPortalCooldown(player)) continue;
                     acceleratePortal(player);
                 }
             }
@@ -62,14 +58,14 @@ public class PortalListener implements Listener {
     private void acceleratePortal(Player player) {
         if (!ensureReflection(player)) return;
 
-        int maxTime = resolveMaxTime(player);
-        int delay   = config.getTeleportDelay();
-        if (delay >= maxTime) return;
-
         try {
             Object nms = getHandleMethod.invoke(player);
             Object pp  = portalProcessField.get(nms); // PortalProcessor instance
             if (pp == null) return;                    // Created next tick by the game
+
+            int maxTime = resolveMaxTime(nms);
+            int delay   = config.getTeleportDelay();
+            if (delay >= maxTime) return;
 
             int currentTime = processorTimeField.getInt(pp);
             int targetTime  = maxTime - delay;
@@ -84,16 +80,6 @@ public class PortalListener implements Listener {
     }
 
     // -----------------------------------------------------------------------
-    // Cleanup on successful portal teleport
-    // -----------------------------------------------------------------------
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlayerTeleport(PlayerTeleportEvent event) {
-        // portalProcess is set to null by the game after teleportation,
-        // so no manual cleanup needed – the tick task handles it automatically.
-    }
-
-    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
 
@@ -102,16 +88,6 @@ public class PortalListener implements Listener {
         var torso = feet.getRelative(0, 1, 0);
         return feet.getType()  == Material.NETHER_PORTAL
             || torso.getType() == Material.NETHER_PORTAL;
-    }
-
-    private boolean hasPortalCooldown(Player player) {
-        if (portalCooldownField == null || getHandleMethod == null) return false;
-        try {
-            Object nms = getHandleMethod.invoke(player);
-            return portalCooldownField.getInt(nms) > 0;
-        } catch (Exception e) {
-            return false;
-        }
     }
 
     // -----------------------------------------------------------------------
@@ -133,7 +109,6 @@ public class PortalListener implements Listener {
                 return false;
             }
 
-            portalCooldownField    = getDeclaredFieldSafe(entityClass, "portalCooldown");
             getPortalWaitTimeMethod = findMethod(nms.getClass(), "getPortalWaitTime");
 
             // In Paper 1.21.8 portalTime lives inside PortalProcessor
@@ -158,10 +133,9 @@ public class PortalListener implements Listener {
         return processorTimeField != null;
     }
 
-    private int resolveMaxTime(Player player) {
+    private int resolveMaxTime(Object nms) {
         if (getPortalWaitTimeMethod == null) return VANILLA_WAIT_TIME;
         try {
-            Object nms = getHandleMethod.invoke(player);
             int v = (int) getPortalWaitTimeMethod.invoke(nms);
             return v > 0 ? v : VANILLA_WAIT_TIME;
         } catch (Exception e) {
