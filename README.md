@@ -81,15 +81,6 @@ LuckPerms examples:
 
 Alias: `/inp`
 
-## Building
-
-```powershell
-.\build.ps1
-```
-
-The script compiles the plugin, copies the JAR to `versions/` using the naming convention
-`InstantNetherPortals_v{major}.{minor}_{mc-version}.jar`, and bumps the minor version in `pom.xml`.
-
 ## How it works
 
 Paper 1.21.8 tracks the portal wait time in a `PortalProcessor` object (`Entity.portalProcess`). Every tick the plugin sets `PortalProcessor.portalTime` to `maxTime - delay` via reflection, so the game fires the portal after exactly `delay` more ticks. At `delay = 0` that happens within 1 to 2 game ticks (roughly 50 to 100 ms), which nobody notices.
