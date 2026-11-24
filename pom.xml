@@ -10,15 +10,25 @@
     <packaging>jar</packaging>
 
     <name>InstantNetherPortals</name>
-    <description>Makes Nether portals teleport players instantly with configurable delay</description>
+    <description>Instant Nether portal teleportation with a configurable delay on Paper</description>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <java.version>25</java.version>
+        <paper.version>26.1.2.build.74-stable</paper.version>
+        <plugin.api-version>26.1</plugin.api-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- Minecraft version shown in the output JAR filename -->
-        <mc.version>1.21.8</mc.version>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>paper-1.21</id>
+            <properties>
+                <java.version>21</java.version>
+                <paper.version>1.21.11-R0.1-SNAPSHOT</paper.version>
+                <plugin.api-version>1.21</plugin.api-version>
+            </properties>
+        </profile>
+    </profiles>
 
     <repositories>
         <repository>
@@ -28,45 +38,41 @@
     </repositories>
 
     <dependencies>
-        <!-- Paper API – set version to the Paper build you compile against -->
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.21.4-R0.1-SNAPSHOT</version>
+            <version>${paper.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
 
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-                <configuration>
-                    <source>21</source>
-                    <target>21</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.4.1</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                        </manifest>
-                    </archive>
-                    <finalName>${project.artifactId}-${project.version}</finalName>
-                </configuration>
-            </plugin>
-        </plugins>
+        <defaultGoal>package</defaultGoal>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+                <includes>
+                    <include>plugin.yml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>plugin.yml</exclude>
+                </excludes>
             </resource>
         </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <release>${java.version}</release>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>

@@ -1,5 +1,9 @@
 # InstantNetherPortals Configuration
 
+# Message language: en, de, ru, es, fr, ja, zh
+# Custom files go in plugins/InstantNetherPortals/lang/<code>.yml
+language: en
+
 # Whether the plugin is currently active
 enabled: true
 
@@ -10,3 +14,13 @@ enabled: true
 #  80  = vanilla default (4 seconds in survival)
 # Only values from 0 to 80 are meaningful; higher values fall back to vanilla.
 teleport-delay: 0
+
+# Chunk pre-loading: loads chunks on the destination side while the player
+# approaches a portal, preventing the freeze/lag on arrival.
+chunk-preload:
+  # Enable or disable chunk pre-loading entirely
+  enabled: true
+  # Block radius around the player to search for nearby Nether portals.
+  # When a portal is found within this radius, destination chunks are queued.
+  # Recommended: 10-16. Higher values increase block-search cost (runs every second).
+  radius: 10
