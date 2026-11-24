@@ -23,7 +23,6 @@ public class PortalAccelerator {
     private Method getHandle;
     private Field portalProcessField;
     private Field portalTimeField;
-    private Field portalCooldownField;
     private Method getPortalWaitTime;
 
     public PortalAccelerator(JavaPlugin plugin, ConfigManager config) {
@@ -40,6 +39,7 @@ public class PortalAccelerator {
         if (!config.isEnabled()) return;
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             if (!player.hasPermission("instantnetherportals.use")) continue;
+            if (player.getPortalCooldown() > 0) continue;
             if (!isInNetherPortal(player)) continue;
             accelerate(player);
         }
@@ -50,14 +50,12 @@ public class PortalAccelerator {
 
         try {
             Object handle = getHandle.invoke(player);
-            if (isOnPortalCooldown(handle)) return;
+            Object processor = portalProcessField.get(handle);
+            if (processor == null) return;
 
             int waitTime = resolveWaitTime(handle);
             int delay = config.getTeleportDelay();
             if (delay >= waitTime) return;
-
-            Object processor = portalProcessField.get(handle);
-            if (processor == null) return;
 
             int target = waitTime - delay;
             if (portalTimeField.getInt(processor) < target) {
@@ -72,10 +70,6 @@ public class PortalAccelerator {
         Block feet = player.getLocation().getBlock();
         return feet.getType() == Material.NETHER_PORTAL
                 || feet.getRelative(0, 1, 0).getType() == Material.NETHER_PORTAL;
-    }
-
-    private boolean isOnPortalCooldown(Object handle) throws ReflectiveOperationException {
-        return portalCooldownField != null && portalCooldownField.getInt(handle) > 0;
     }
 
     private int resolveWaitTime(Object handle) {
@@ -114,7 +108,6 @@ public class PortalAccelerator {
                 return false;
             }
 
-            portalCooldownField = declaredField(entityClass, "portalCooldown");
             getPortalWaitTime = findMethod(entityClass, "getPortalWaitTime");
             log.info("Portal acceleration ready.");
         } catch (ReflectiveOperationException e) {
